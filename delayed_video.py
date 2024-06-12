@@ -1,18 +1,20 @@
 import cv2
 import time
 import os
+import subprocess
 
-def disp_delayed_video():
+def disp_delayed_video(fps,delay,quality):
     cap = cv2.VideoCapture(0)  # Start video capture
 
     frame_counter = 0  # Initialize a frame counter
-    frame_rate = 5 # Frames per second
-    wait_time = 1 / frame_rate  # Time to wait between frames
-    video_delay_time = 5  # Time to wait before displaying the saved frame
+    wait_time = 1 / fps  # Time to wait between frames
 
-    number_of_frames_to_buffer = video_delay_time*frame_rate
+    number_of_frames_to_buffer = delay*fps
 
     last_frame_time = time.time()
+
+    # initialize the filename
+    filename = 'frame_storage/frame_0.jpg'
 
     while True:
         # Read a frame from the webcam
@@ -26,11 +28,11 @@ def disp_delayed_video():
 
                 # Save the frame as a JPEG file with reduced quality
                 filename = os.path.join('frame_storage', f"frame_{frame_counter}.jpg")
-                cv2.imwrite(filename, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 10])
+                cv2.imwrite(filename, frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
                 frame_counter += 1  # Increment the frame counter
 
                 last_frame_time = current_time  # Update the last frame time
-
+    
         if os.path.exists(filename):
             # Read the saved JPEG file
             saved_frame = cv2.imread(filename)
@@ -52,9 +54,23 @@ def disp_delayed_video():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # rm -rf frame_storage/*
 
     cap.release()
     cv2.destroyAllWindows()
 
-disp_delayed_video()
+def clear_storage():
+    subprocess.run('rm -rf frame_storage/*',shell=True)
+
+
+
+
+# fps interger from 1 to 30 (higher untested)
+# buffer delay interger from 1 to 600 (higher untested)
+# quality interger from 1-100
+
+
+disp_delayed_video(1, 2, 1)
+
+clear_storage()
+
+
