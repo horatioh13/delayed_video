@@ -71,6 +71,6 @@ def clear_storage():
 
 disp_delayed_video(1, 2, 1)
 
-clear_storage()
+#clear_storage()
 
 
