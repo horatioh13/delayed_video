@@ -76,7 +76,6 @@ def disp_delayed_video(fps, delay, quality, storage_path):
     cap.release()
     cv2.destroyAllWindows()
 
-
 def disp_delayed_video2(fps, delay, quality, storage_path):
 
     list_of_times = []
@@ -147,12 +146,6 @@ def disp_delayed_video2(fps, delay, quality, storage_path):
     cap.release()
     cv2.destroyAllWindows()
 
-
-
-
-
-
-
 def clear_folder(storage_path):
     if os.path.isdir(storage_path):
         for item in os.listdir(storage_path):
@@ -182,7 +175,7 @@ def start_video_capture_ui(fps, delay, quality, storage_path_label):
     if storage_path == "":
         messagebox.showinfo("Error", "Please select a storage path.")
         return
-    disp_delayed_video(fps.get(), delay.get(), quality.get(), storage_path)
+    disp_delayed_video2(fps.get(), delay.get(), quality.get(), storage_path)
 
 def main_gui():
     # Initialize the main window
@@ -223,10 +216,15 @@ def main_gui():
 
     root.mainloop()
 
-#main_gui()
+main_gui()
 
-path = '/media/horatio/USB DISK/usb_storage'
+# on usb2.0 maxfps = 6, on my local ssd maxfps = 30
+# Lower delay on live feed WHEN USING LOWER FPS setting
+# EVEN IF REAL FPS IS LOWER THAN SETTING, THERE WILL BE A DELAY
+# 
 
-disp_delayed_video2(15, 30, 1, path)
+#path = '/media/horatio/USB DISK/usb_storage'
+
+#disp_delayed_video2(60, 30, 1, path)
 
 #clear_folder(path)
