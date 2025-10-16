@@ -4,11 +4,11 @@ import os
 import tkinter as tk
 from tkinter import filedialog, Scale, Label, Button, HORIZONTAL, messagebox
 import shutil
+from flask import Flask, Response
 
 def disp_delayed_video(fps, delay, quality, storage_path):
 
     start_time = time.time()
-
 
     if not os.path.exists(storage_path):
         print('directory does not exist')
@@ -213,16 +213,31 @@ def disp_delayed_video2(fps, delay, quality, storage_path, storage_management, s
     cv2.destroyAllWindows()
 
 def clear_folder(storage_path):
-    if os.path.isdir(storage_path):
-        for item in os.listdir(storage_path):
-            item_path = os.path.join(storage_path, item)
-            try:
-                if os.path.isfile(item_path) or os.path.islink(item_path):
-                    os.unlink(item_path)
-                elif os.path.isdir(item_path):
-                    shutil.rmtree(item_path)
-            except Exception as e:
-                print(f'Failed to delete {item_path}. Reason: {e}')
+    # Add validation to prevent deleting current directory
+    if not storage_path or storage_path.strip() == "":
+        print("Error: No storage path specified")
+        messagebox.showerror("Error", "Please select a storage path first")
+        return
+    
+    if not os.path.isdir(storage_path):
+        print(f"Error: {storage_path} is not a valid directory")
+        messagebox.showerror("Error", "Invalid storage path")
+        return
+    
+    # Additional safety check - don't delete current working directory
+    if os.path.abspath(storage_path) == os.path.abspath(os.getcwd()):
+        messagebox.showerror("Error", "Cannot clear current working directory")
+        return
+    
+    for item in os.listdir(storage_path):
+        item_path = os.path.join(storage_path, item)
+        try:
+            if os.path.isfile(item_path) or os.path.islink(item_path):
+                os.unlink(item_path)
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+        except Exception as e:
+            print(f'Failed to delete {item_path}. Reason: {e}')
 
 def select_storage_path():
     root = tk.Tk()
@@ -242,9 +257,15 @@ def start_video_capture_ui(fps, delay, quality, storage_path_label, storage_mana
     
     total_delay = delay[0].get() + delay[1].get() * 60 + delay[2].get() * 3600
     storage_path = storage_path_label.cget("text").replace("Storage Path: ", "")
+    
+    # If no storage path is selected, create a default 'frame_storage' folder
     if storage_path == "":
-        messagebox.showinfo("Error", "Please select a storage path.")
-        return
+        storage_path = os.path.join(os.getcwd(), 'frame_storage')
+        if not os.path.exists(storage_path):
+            os.makedirs(storage_path)
+            print(f"Created default storage folder: {storage_path}")
+        storage_path_label.config(text=f"Storage Path: {storage_path}")
+    
     disp_delayed_video2(fps.get(), total_delay, quality.get(), storage_path, storage_management, special_effects)
 
 def main_gui():
