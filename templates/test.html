@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delayed Video Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .controls label {
+            display: inline-block;
+            margin: 10px 15px 10px 0;
+            font-weight: bold;
+        }
+        .controls input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.stop {
+            background: #dc3545;
+        }
+        button.stop:hover {
+            background: #c82333;
+        }
+        .video-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .video-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .video-box h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .video-box img {
+            width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background: #000;
+        }
+        .status {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .video-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 Delayed Video Stream Test</h1>
+    
+    <div class="controls">
+        <h3>Settings</h3>
+        <div>
+            <label>FPS: <input type="number" id="fps" value="10" min="1" max="60"></label>
+            <label>Delay (seconds): <input type="number" id="delay" value="5" min="1" max="3600"></label>
+            <label>Quality: <input type="number" id="quality" value="50" min="1" max="100"></label>
+        </div>
+        <div>
+            <label><input type="checkbox" id="storage_management"> Storage Management (Auto-delete old frames)</label>
+            <label><input type="checkbox" id="special_effects"> Special Effects (Grayscale + Timestamp)</label>
+        </div>
+        <div style="margin-top: 15px;">
+            <button onclick="startCapture()">▶️ Start Capture</button>
+            <button class="stop" onclick="stopCapture()">⏹️ Stop Capture</button>
+        </div>
+        <div class="status" id="status">Status: Stopped</div>
+    </div>
+    
+    <div class="video-container">
+        <div class="video-box">
+            <h3>📹 Current Feed (Live)</h3>
+            <img src="/delayed_video/feed/current" alt="Current Feed" id="currentFeed">
+        </div>
+        <div class="video-box">
+            <h3>⏱️ Delayed Feed</h3>
+            <img src="/delayed_video/feed/delayed" alt="Delayed Feed" id="delayedFeed">
+        </div>
+    </div>
+    
+    <script>
+        function updateStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Status: ' + message;
+            statusEl.style.backgroundColor = isError ? '#f8d7da' : '#d4edda';
+            statusEl.style.color = isError ? '#721c24' : '#155724';
+        }
+
+        function startCapture() {
+            const data = {
+                fps: parseInt(document.getElementById('fps').value),
+                delay: parseInt(document.getElementById('delay').value),
+                quality: parseInt(document.getElementById('quality').value),
+                storage_management: document.getElementById('storage_management').checked,
+                special_effects: document.getElementById('special_effects').checked
+            };
+            
+            updateStatus('Starting capture...');
+            
+            fetch('/delayed_video/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                if (data.status === 'started') {
+                    updateStatus('Running - FPS: ' + document.getElementById('fps').value + 
+                               ', Delay: ' + document.getElementById('delay').value + 's');
+                } else {
+                    updateStatus('Already running', true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateStatus('Error starting capture', true);
+            });
+        }
+        
+        function stopCapture() {
+            updateStatus('Stopping capture...');
+            
+            fetch('/delayed_video/stop', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                updateStatus('Stopped');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateStatus('Error stopping capture', true);
+            });
+        }
+
+        // Add timestamp to image URLs to prevent caching
+        setInterval(() => {
+            const currentFeed = document.getElementById('currentFeed');
+            const delayedFeed = document.getElementById('delayedFeed');
+            const timestamp = new Date().getTime();
+            
+            if (!currentFeed.src.includes('?')) {
+                currentFeed.src = currentFeed.src.split('?')[0] + '?t=' + timestamp;
+                delayedFeed.src = delayedFeed.src.split('?')[0] + '?t=' + timestamp;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

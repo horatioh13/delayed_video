@@ -1,2 +1,12 @@
 .venv
 frame_storage/
+
+# pre-factory-reset hygiene
+__pycache__/
+*.pyc
+*.pyo
+build/
+dist/
+.venv/
+venv/
+node_modules/

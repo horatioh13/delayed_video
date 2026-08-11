@@ -4,7 +4,6 @@ import os
 import tkinter as tk
 from tkinter import filedialog, Scale, Label, Button, HORIZONTAL, messagebox
 import shutil
-from flask import Flask, Response
 
 def disp_delayed_video(fps, delay, quality, storage_path):
 
